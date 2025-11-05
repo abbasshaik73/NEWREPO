@@ -1,0 +1,10 @@
+import pyperclip
+
+# Copy text to the clipboard
+text_to_copy = "This text will be copied to the clipboard."
+pyperclip.copy(text_to_copy)
+print(f"'{text_to_copy}' copied to clipboard.")
+
+# Paste text from the clipboard
+pasted_text = pyperclip.paste()
+print(f"Text pasted from clipboard: '{pasted_text}'")
