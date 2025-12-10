@@ -118,7 +118,7 @@ def generate_flight_data():
 
 # Navigation
 def navigation():
-    st.sidebar.image("✈️", width=50)
+    st.sidebar.markdown("# ✈️ SkyWings Booking")
     st.sidebar.title("SkyWings Booking")
     page = st.sidebar.radio(
         "Navigation",
