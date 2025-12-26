@@ -1,0 +1,68 @@
+pipeline {
+    agent {
+        node {
+            label 'docker'
+        }
+    }
+    tools {
+        maven 'mymaven'
+    }
+    stages {
+        stage ('code') {
+            steps {
+                git 'https://github.com/abbasshaik73/dockerwebapp.git'
+            }
+        }
+        stage ('CQA') {
+            steps {
+                withSonarQubeEnv('mysonar') {
+                    sh "mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=project"
+                } 
+            }
+        }
+        stage ('build') {
+            steps {
+                sh 'mvn clean package'
+                sh 'cp -r target Docker-app'
+            }
+        }
+        stage ('Artifact') {
+            steps {
+                nexusArtifactUploader artifacts: [[artifactId: 'vprofile', classifier: '', file: 'target/vprofile-v2.war', type: 'war']], credentialsId: 'nexus', groupId: 'com.visualpathit', nexusUrl: '18.205.194.29:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'repo', version: 'v2'
+            }
+        }
+        stage ('Image') {
+            steps {
+                sh 'docker build -t appimage Docker-app'
+                sh 'docker build -t dbimage Docker-db'
+            }
+        }
+        stage ('Scan image') {
+            steps {
+                sh 'trivy image appimage'
+                sh 'trivy image dbimage'
+            }
+        }
+        stage ('Tag') {
+            steps {
+                sh 'docker tag appimage abbasshaik739/myreposit:appimage'
+                sh 'docker tag dbimage abbasshaik739/myreposit:dbimage'
+            }
+        }
+        stage ('Push') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'dcker') {
+                        sh 'docker push abbasshaik739/myreposit:appimage'
+                        sh 'docker push abbasshaik739/myreposit:dbimage'
+                    }
+                }
+            }
+        }
+        stage ('Deploy') {
+            steps {
+                sh 'docker stack deploy flm -c compose.yml'
+            }
+        }
+    }
+}
