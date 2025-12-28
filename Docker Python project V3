@@ -1,0 +1,66 @@
+pipeline {
+    agent {
+        node {
+            label 'docker'
+        }
+    }
+    stages {
+        stage ('code') {
+            steps {
+                git 'https://github.com/abbasshaik73/python-code-library-app.git'
+            }
+        }
+        stage ('Dockerfile') {
+            steps {
+                sh 'docker build -t authimage auth'
+                sh 'docker build -t bookimage book'
+                sh 'docker build -t borrowimage borrow'
+                sh 'docker build -t dbimage database'
+                sh 'docker build -t frontendimage .'
+            }
+        }
+        stage ('Scan Image') {
+            steps {
+                sh 'trivy image authimage'
+                sh 'trivy image bookimage'
+                sh 'trivy image borrowimage'
+                sh 'trivy image dbimage'
+                sh 'trivy image frontendimage'
+            }
+        }
+        stage ('Tag Image') {
+            steps {
+                sh 'docker tag authimage abbasshaik739/project1:authimage'
+                sh 'docker tag bookimage abbasshaik739/project1:bookimage'
+                sh 'docker tag borrowimage abbasshaik739/project1:borrowimage'
+                sh 'docker tag dbimage abbasshaik739/project1:dbimage'
+                sh 'docker tag frontendimage abbasshaik739/project1:frontendimage'
+            }
+        }
+        stage ('Push Image') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: '0665366b-25ac-423c-acdc-04a55fa584c2') {
+                        sh 'docker push abbasshaik739/project1:authimage'
+                        sh 'docker push abbasshaik739/project1:bookimage'
+                        sh 'docker push abbasshaik739/project1:borrowimage'
+                        sh 'docker push abbasshaik739/project1:dbimage'
+                        sh 'docker push abbasshaik739/project1:frontendimage'
+                    }
+                }
+            }
+        }
+        stage ('Deploy') {
+            steps {
+                sh 'docker stack deploy abbas -c compose.yml'
+            }
+        }
+    }
+    post {
+        always {
+            mail to: 'abbasshaik0908@gmail.com',
+            subject: "SUCCESS: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+            body: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} \n build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+        }
+    }
+}
