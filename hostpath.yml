@@ -32,5 +32,5 @@ spec:
 
       volumes:
         - name: devops
-          hostpath:
+          hostPath:
             path: /etc/myvolume/
