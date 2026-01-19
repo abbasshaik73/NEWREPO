@@ -1,0 +1,35 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mydeploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: swiggy
+  template:
+    metadata:
+      name: mytemp
+      labels:
+        app: swiggy
+    spec:
+      containers:
+        - name: mycont
+          image: nginx
+          volumeMounts:
+            - mountPath: /opt/cont1/
+              name: devops
+
+        - name: seccont
+          image: httpd
+          command: ["/bin/bash", "-c", "while true; do echo Happy Pogal; sleep 10; done"]
+          volumeMounts:
+            - mountPath: /opt/cont1/
+              name: devops
+
+
+
+      volumes:
+        - name: devops
+          emptyDir: {}
